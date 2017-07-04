@@ -1,9 +1,9 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
-#include "cpvgen.h"
-#include "cpvfitter.h"
-#include "evt.h"
+#include <cstdint>
+
+#include "fitmodes.h"
 
 class Driver {
  public:
@@ -26,6 +26,8 @@ class Driver {
      * @param mode
      */
     void all_in_one(fitmode mode);
+    void kspp_fit(fitmode mode, uint32_t nevt, uint16_t bin=0);
+    void kspp_bin_scan(fitmode mode, uint32_t nevt);
 };
 
 #endif  // DRIVER_H

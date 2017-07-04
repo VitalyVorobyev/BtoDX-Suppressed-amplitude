@@ -1,11 +1,16 @@
 #ifndef EVT_H
 #define EVT_H
 
-enum dtypes : int {CPp = +1, CPn = -1, KPI = +2, PIK = -2, KsPIPI = 0};
+#include <cstdint>
 
+#include "fitmodes.h"
+
+/**
+ * @brief The event class for time-dependent CPV fit
+ */
 class Evt {
  public:
-    Evt(double _time, int _tag, dtypes _type) :
+    Evt(double _time, int16_t _tag, dtypes _type) :
         time(_time), tag(_tag), type(_type) {}
     /**
      * @brief Time difference between signal and tag B mesons
@@ -14,7 +19,7 @@ class Evt {
     /**
      * @brief B0 flavor tag = +1 or -1
      */
-    int tag;
+    int16_t tag;
     /**
      * @brief D0 final state type
      * type = +1 (-1) D -> CP+ (CP-)

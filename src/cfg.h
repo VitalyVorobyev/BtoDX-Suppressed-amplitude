@@ -3,11 +3,13 @@
 
 #include <string>
 #include <utility>  // pair
+#include <memory>
 
 #include "mylibs/libTatami/toypdf.h"
 
 #include "lambda.h"
 #include "evt.h"
+#include "binnedparams.h"
 
 class Cfg {
  public:
@@ -16,12 +18,15 @@ class Cfg {
     static Lambda_b2cud lamf(dtypes type);
     static Lambda_b2cud lamf0(dtypes type);
     static std::pair<int, int> nevts(dtypes type);
-    static std::string dfile(dtypes type);
+    static std::string dfile(dtypes type, uint32_t nevt=0);
     static libTatami::ToyPdf pdf();
 
+    static void set_rb(double x) {rb = x;}
     static void set_delb(double x) {delb = x;}
     static void set_ncp(double x) {ncp = x;}
     static void set_nfl(double x) {nfl =x;}
+
+    static std::unique_ptr<BinnedParams> bpars(bool approx=false);
 
  private:
     Cfg();
@@ -55,6 +60,11 @@ class Cfg {
     static std::string nega_cp_file;
     static std::string kpi_file;
     static std::string pik_file;
+    static std::string kspp_file;
+
+    static std::string kspp_csk_file;
+    static std::string kspp_adds_file;
+    static std::string kspp_approx_adds_file;
 };
 
 #endif  // CFG_H
