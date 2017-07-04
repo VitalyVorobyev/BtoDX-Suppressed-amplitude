@@ -69,6 +69,6 @@ def make_fit(delb, betav):
         print(par, '+-', np.sqrt(pcov[idx, idx]))
     return popt
 
-POSI_DATA = get_data(DATA_PATH + 'db_scan_posicp.txt')
-NEGA_DATA = get_data(DATA_PATH + 'db_scan_negacp.txt')
+POSI_DATA = get_data(DATA_PATH + 'cpp_delb_scan.txt')
+NEGA_DATA = get_data(DATA_PATH + 'cpn_delb_scan.txt')
 db_scan_plot(POSI_DATA, NEGA_DATA)
