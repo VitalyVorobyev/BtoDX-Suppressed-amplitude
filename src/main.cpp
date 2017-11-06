@@ -1,89 +1,70 @@
 #include <utility>
 #include <iostream>
+#include <string>
+#include <map>
 
-#include "driver.h"
+#include "wfdriver.h"
 #include "cfg.h"
-#include "cpvgen.h"
 
 using std::cout;
 using std::endl;
+using std::string;
+using std::to_string;
+using std::map;
+
+const map<string, fitmode> mode_map = {
+    {"corr", fitmode::Corrected},
+    {"full", fitmode::Full},
+    {"simp", fitmode::Simple},
+    {"appr", fitmode::Approx}
+};
+
+const map<string, double> pars = {
+    {"x", 0.01},
+    {"y", 0.01},
+    {"rb", 0.02},
+    {"beta", 23.},
+    {"dtlim", 70.}
+};
 
 int main(int argc, char** argv) {
+    const auto x = pars.at("x");
+    const auto y = pars.at("y");
+
+    Cfg::set_beta(pars.at("beta"));
+    Cfg::set_dtlim(pars.at("dtlim"));
+    Cfg::set_charm_mix(x, y);
     Cfg::print_config();
-//    Driver driver;
-//    driver.delb_scan(dtypes::CPn);
-//    driver.single_fit(dtypes::CPp);
-//    driver.single_fit(dtypes::CPn);
-//    driver.single_fit(dtypes::KPI, fitmode::Corrected);
-//    driver.single_fit(dtypes::PIK);
-//    driver.cpp_and_cpn(fitmode::Simple);
-//    driver.cpp_and_cpn(fitmode::Corrected);
-//    driver.cpp_and_cpn(fitmode::Full);
-//    for (unsigned i = 0; i < 500; i++)
-//        driver.all_in_one(fitmode::Corrected);
-//    driver.all_in_one(fitmode::Simple);
 
-//    CPVGen gen;
-//    auto nevt = std::make_pair(1000000, 1000000);
-//    gen.GenAndWrite(dtypes::KsPIPI, nevt);
-
-//    auto fname = Cfg::dfile(dtypes::KsPIPI);
-//    CPVFitter fit(fname, fitmode::Full);
-//    CPVFitter fit(fname, fitmode::Corrected);
-//    CPVFitter fit1(fname, fitmode::Simple);
-//    CPVFitter fit2(fname, fitmode::Approx);
-    auto nevt = 100000;
-    CPVGen gen;
-    Driver driver;
-    auto nevts = std::make_pair(nevt, nevt);
-
-    // Null scan
-    Cfg::set_rb(0.);
-    cout << "Null scan: rB = 0" << endl;
-    gen.GenAndWrite(dtypes::KsPIPI, nevts);
-
-    cout << "### FULL DP SIMPLE ###" << endl;
-    driver.kspp_fit(fitmode::Simple, nevt);
-
-//    for(auto idx = 0; idx < 10; idx++) {
-//        cout << "Null scan: rB = 0" << endl;
-//        gen.GenAndWrite(dtypes::KsPIPI, nevts);
-
-//        cout << "### BIN SCAN SIMPLE ###" << endl;
-//        driver.kspp_bin_scan(fitmode::Simple, nevt);
-//    }
-
-    // Simple scan
-//    for (auto delb = 0; delb < 360; delb += 15) {
-//        cout << "### DELTAB " << delb << endl;
+    constexpr uint64_t nevt = 1000000;
+//    constexpr uint16_t sb = 0;
+//    for (double delb = 0.; delb < 360.; delb += 10) {
 //        Cfg::set_delb(delb);
-//        gen.GenAndWrite(dtypes::KsPIPI, nevts);
-
-//        cout << "### BIN SCAN SIMPLE ###" << endl;
-//        driver.kspp_bin_scan(fitmode::Simple, nevt);
-
-//        cout << "### FULL DP SIMPLE ###" << endl;
-//        driver.kspp_fit(fitmode::Simple, nevt);
+//        cout << "New delb " << delb << endl;
+//        WFDriver::gen_dd_with_wf(bmode::dh, pars.at("rb"), nevt);
+//        WFDriver::gen_cp_with_wf(bmode::dh, pars.at("rb"), nevt / 2, nevt / 2);
+//        WFDriver::fit_with_wf(bmode::dh, fitmode::DhCorrected, pars.at("rb"));
+//        WFDriver::fit_with_wf(bmode::dh, fitmode::Dh, pars.at("rb"));
 //    }
 
-    // Approx scan
-//    for (auto delb = 0; delb < 360; delb += 15) {
-//        cout << "### DELTAB " << delb << endl;
-//        Cfg::set_delb(delb);
-//        gen.GenAndWrite(dtypes::KsPIPI, nevts);
+    WFDriver::gen_dd_with_charm_mix(bmode::dh, pars.at("x"), pars.at("y"), nevt);
+    WFDriver::gen_cp_with_charm_mix(bmode::dh, pars.at("x"), pars.at("y"), nevt / 2, nevt / 2);
+    WFDriver::fit_with_charm_mix(bmode::dh, fitmode::DhCorrected, pars.at("x"), pars.at("y"));
+    WFDriver::fit_with_charm_mix(bmode::dh, fitmode::Dh, pars.at("x"), pars.at("y"));
 
-//        cout << "### FULL DP APPROX ###" << endl;
-//        driver.kspp_fit(fitmode::Approx, nevt);
-//    }
+//    constexpr uint16_t idxlo = 0;
+//    constexpr uint16_t idxhi = 100;
 
-    // Full scan
-//    for (auto delb = 0; delb < 360; delb += 15) {
-//        cout << "### DELTAB " << delb << " ###" << endl;
-//        Cfg::set_delb(delb);
-//        gen.GenAndWrite(dtypes::KsPIPI, nevts);
+//    double rb = 0.02;
+//    WFDriver::gen_cp_with_charm_mix(10, 10, x, y);
+//    WFDriver::gen_dd_with_charm_mix(nevt, x, y);
+//    WFDriver::fit_with_charm_mix(fitmode::Corrected, x, y, sb);
+//    WFDriver::fit_with_charm_mix(fitmode::Full, x, y, sb);
 
-//        cout << "### FULL DP APPROX ###" << endl;
-//        driver.kspp_fit(fitmode::Full, nevt);
-//    }
+//    WFDriver::gen_dd_with_wf(nevt, idxlo, idxhi, rb);
+//    WFDriver::gen_cp_with_wf(0, nevt, idxlo, idxhi, rb);
+//    WFDriver::fit_with_wf(fitmode::Corrected, idxlo, idxhi, rb, sb);
+//    WFDriver::fit_with_wf(fitmode::Full, idxlo, idxhi, rb, sb);
+
     return 0;
 }

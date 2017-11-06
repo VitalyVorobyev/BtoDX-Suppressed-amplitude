@@ -2,7 +2,7 @@
 
 //#include <cmath>
 
-typedef std::complex<double> compld;
+using compld = std::complex<double>;
 
 using std::pow;
 using std::exp;

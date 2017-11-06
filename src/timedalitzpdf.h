@@ -44,4 +44,4 @@ public:
     auto getEvent();
 };
 
-#endif // TIMEDALITZPDF_H
+#endif  // TIMEDALITZPDF_H

@@ -56,21 +56,21 @@ double CPVFcn::operator()(const vector<double>& par) const {
     // event loop
     double loglh = 0;
     for (const auto& evt : sevtv) {
-        if (single_bin && (abs(evt.bin) != single_bin)) continue;
+        if (single_bin && (abs(evt.Bin()) != single_bin)) continue;
         double ccoef, scoef;
-        if (evt.type == dtypes::KsPIPI) {
-            auto coefs = bpars->coefs(evt.bin);
+        if (evt.Type() == dtypes::KsPIPI) {
+            auto coefs = bpars->coefs(evt.Bin());
             ccoef = coefs.first;
             scoef = coefs.second;
         } else {
-            auto &lamf = slambdas.find(evt.type)->second;
+            auto &lamf = slambdas.at(evt.Type());
             ccoef = lamf.ccoef();
             scoef = lamf.scoef();
         }
-        loglh += -2. * log(spdf(evt.time, evt.tag, ccoef, scoef));
+        loglh += log(spdf(evt.t(), evt.Tag(), ccoef, scoef));
     }
     cout << "llh " << loglh << ", beta " << par[0] * rad_to_deg << endl;
-    return loglh;
+    return -2. * loglh;
 }
 
 //double CPVFcn::operator()(const vector<double>& par) const {

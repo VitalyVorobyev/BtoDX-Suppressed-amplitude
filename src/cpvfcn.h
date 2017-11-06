@@ -16,7 +16,7 @@ class CPVFcn : public ROOT::Minuit2::FCNBase {
 
     double theErrorDef;
 
-public:
+ public:
     CPVFcn(fitmode fmode, const std::vector<BEvt>& evtv, uint16_t sb);
 
     virtual double Up(void) const override {return theErrorDef;}

@@ -4,7 +4,7 @@
 import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
+#import matplotlib.animation as animation
 
 from lamf import ccoef, scoef, lamdaf
 from lamf import ccoef_fo, scoef_fo
@@ -110,8 +110,8 @@ def cos_animate(i):
         line.set_data(XAXIS, vals)
     return LINES
 
-def cos_animat():
-    """ Make animation """
+#def cos_animat():
+#    """ Make animation """
 
 # anim = animation.FuncAnimation(fig, animate, init_func=init,
 #                                frames=100, interval=20, blit=True)

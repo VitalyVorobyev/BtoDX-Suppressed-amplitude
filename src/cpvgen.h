@@ -4,10 +4,14 @@
 #include <utility>  // pair
 #include <vector>
 #include <string>
+#include <memory>
 
 #include "mylibs/libTatami/toypdf.h"
 
-#include "bevt.h"
+#include "dbevt.h"
+#include "ddbpars.h"
+#include "ddmpars.h"
+#include "absddpars.h"
 
 /**
  * @brief The CPVGen class.
@@ -23,21 +27,22 @@ class CPVGen {
      * @param evtv
      * @param type. Type of D meson final state
      */
-    void Gen(libTatami::ToyPdf& pdf, std::pair<uint64_t, uint64_t> &&nev,
-             std::vector<BEvt>& evtv, dtypes type, int16_t bin=0);
+    auto Gen(libTatami::ToyPdf& pdf, std::pair<uint64_t, uint64_t> &&nev,
+             dtypes type, int16_t bin=0);
     /**
      * @brief Generate vector of Evt events with
      * predefined configuration
      * @param evtv
      * @param type. Type of D meson final state
      */
-    void Gen(std::vector<BEvt>& evtv, dtypes type);
+    auto Gen(dtypes type);
     /**
      * @brief Write events into text file in random order
      * @param evts. Vector of events
      * @param fname. File name
      */
-    void ShuffleAndWrite(std::vector<BEvt>& evts, const std::string& fname);
+    void ShuffleAndWrite(std::vector<std::unique_ptr<BEvt>>& evts,
+                         const std::string& fname);
     /**
      * @brief Generate events with custum configuration and
      * save it in file
@@ -70,9 +75,7 @@ class CPVGen {
      */
     void GenKspipi(std::pair<uint64_t, uint64_t>&& nev,
                    const std::string& fname=default_str);
-    /**
-     * @brief Generate all types of events and save into files
-     */
+    /** @brief Generate all types of events and save into files */
     void CompleteData(const std::string &pref=default_str);
 
  private:
