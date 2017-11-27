@@ -27,6 +27,18 @@ constexpr bool dump = false;
 using DDMap = std::unordered_map<int16_t, std::unordered_map<int16_t, double>>;
 using DMap = std::unordered_map<int16_t, double>;
 
+bool isgood_cs(const pair<double, double>& cs) {
+    if (std::isnan(cs.first)     || std::isnan(cs.second) ||
+        std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
+        cout << "check_cs: "
+             << ", ccoef: " << cs.first
+             << ", scoef: " << cs.second
+             << endl;
+        return false;
+    }
+    return true;
+}
+
 unique_ptr<DDGev::pBEvtVec>
 DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     auto pdf = Cfg::pdf();  // Toy PDF
@@ -46,11 +58,8 @@ DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     auto evtv = make_unique<pBEvtVec>();  // vector of events
     for (auto bbin = -m_nbins; bbin <= m_nbins; bbin++) if (bbin) {
         auto cs = pars.coefs(bbin, 0, type);
-        if (std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
-            cout << "Bbin: " << bbin
-                 << ", ccoef: " << cs.first
-                 << ", scoef: " << cs.second
-                 << endl;
+        if (!isgood_cs(cs)) {
+            cout << "DDGev::CPDalitz bbin: " << bbin << endl;
             return evtv;
         }
         pdf.SetCS(cs);
@@ -97,11 +106,8 @@ DDGev::DhCP(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     auto cs = pars.coefs(0, 0, type);
     cout << "C " << cs.first << ", S " << cs.second << endl;
     cout << "DhCP: getting parameters... done" << endl;
-    if (std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
-        cout << "DhCP: "
-             << ", ccoef: " << cs.first
-             << ", scoef: " << cs.second
-             << endl;
+    if (!isgood_cs(cs)) {
+        cout << "DDGev::DhCP" << endl;
         return evtv;
     }
     pdf.SetCS(cs);
@@ -159,13 +165,8 @@ void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
     for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
         cout << "Bin " << dbin << endl;
         auto cs = pars.coefs(0, dbin, dtypes::Dh);
-        if (std::isnan(cs.first) || std::isnan(cs.second) ||
-                std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
-            cout << "DhDalitz: "
-                 << ", Dbin: " << dbin
-                 << ", ccoef: " << cs.first
-                 << ", scoef: " << cs.second
-                 << endl;
+        if (!isgood_cs(cs)) {
+            cout << "DDGev::DhDalitz Dbin: " << dbin << endl;
             return;
         }
         if (dump) cout << "c " << cs.first << ", s " << cs.second << endl;
@@ -216,13 +217,9 @@ void DDGev::DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
     for (auto bbin = -8; bbin <= 8; bbin++) if (bbin) {
         for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
             auto cs = pars.coefs(bbin, dbin, dtypes::KsPIPI);
-            if (std::isnan(cs.first) || std::isnan(cs.second) ||
-                std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
-                cout << "Bbin: " << bbin
-                     << ", Dbin: " << dbin
-                     << ", ccoef: " << cs.first
-                     << ", scoef: " << cs.second
-                     << endl;
+            if (!isgood_cs(cs)) {
+                cout << "DDGev::DoubleDalitz Bbin: " << bbin
+                     << ", Dbin: " << dbin << endl;
                 return;
             }
             pdf.SetCS(cs);

@@ -106,7 +106,7 @@ pair<double, double> DDMPars::calc_ud_dh() const {
 
 pair<double, double> DDMPars::calc_ud_dh_dcp(int16_t xid) const {
     if (dump) cout << "DDMPars::calc_ud_dh_dcp" << endl;
-    return make_pair(1. * xid * m_y, 0.);
+    return make_pair(1. + xid * m_y, 0.);
 }
 
 double DDMPars::calc_f() const {
@@ -167,6 +167,8 @@ pair<double, double> DDMPars::coefs_dh() const {
 pair<double, double> DDMPars::coefs_dhcp(int16_t xid) const {
     auto ud = calc_ud_dh_dcp(xid);
     auto f = calc_f_dh_dcp(xid, 1);
+    if (dump) cout << "u " << ud.first << ", d " << ud.second
+                   << ", f " << f << endl;
     return make_pair(ud.second / ud.first, f / ud.first);
 }
 

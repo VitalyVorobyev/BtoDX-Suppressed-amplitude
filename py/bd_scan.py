@@ -103,6 +103,8 @@ def kspp_scan():
     datap = get_data2(LOGS_PATH + 'fit_dh_wf_rb_02_cpp_delb_scan.txt')
     datan = get_data2(LOGS_PATH + 'fit_dh_wf_rb_02_cpn_delb_scan.txt')
     db_scan_plot(datap, datan)
+    # data = get_data2(LOGS_PATH + 'fit_dh_wf_rb_02_delb_scan.txt')
+    # db_scan_plot(data)
 
 if __name__ == '__main__':
     if len(sys.argv) > 1:
