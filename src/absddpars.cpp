@@ -6,6 +6,7 @@
 #include <exception>
 
 using std::string;
+using std::to_string;
 using std::vector;
 using std::ifstream;
 using std::cout;
@@ -15,9 +16,10 @@ using std::setfill;
 using std::setw;
 using std::setprecision;
 
-AbsDDPars::AbsDDPars(const string& dcfg, const string& bcfg) {
+AbsDDPars::AbsDDPars(const string& dcfg, const string& bcfg, double beta) {
     readDConfig(dcfg, true);
     readBConfig(bcfg, true);
+    m_pars.emplace("beta", beta);
 }
 
 void AbsDDPars::set_c(vector<double>& x) {
@@ -26,6 +28,40 @@ void AbsDDPars::set_c(vector<double>& x) {
 
 void AbsDDPars::set_s(vector<double>& x) {
     m_int["Srf"] = std::move(x);
+}
+
+double AbsDDPars::getInt(const std::string& name, int16_t bin) const {
+    if (bin < 0 || bin >= 8) {
+        cerr << "Wrong bin number " << name << ": " << bin << endl;
+        throw new std::runtime_error("Wrong bin number " + name);
+    }
+    const auto& parVec = m_int.find(name);
+    if (parVec != m_int.end()) return parVec->second.at(bin);
+    cerr << "Can't find integral " << name << endl;
+    throw new std::runtime_error("Can't find integral " + name);
+    return 0;
+}
+
+void AbsDDPars::setParam(const std::string& name, double val) {
+    const auto& param = m_pars.find(name);
+    if (param != m_pars.end()) {
+        param->second = val;
+    } else {
+        cerr << "Can't find parameter " << name << endl;
+        throw new std::runtime_error("Can't find parameter " + name);
+    }
+}
+
+void AbsDDPars::setNewParam(const std::string& name, double val) {
+    m_pars.emplace(name, val);
+}
+
+double AbsDDPars::getParam(const std::string& name) const {
+    const auto& param = m_pars.find(name);
+    if (param != m_pars.end()) return param->second;
+    cerr << "Can't find parameter " << name << endl;
+    throw new std::runtime_error("Can't find parameter " + name);
+    return 0;
 }
 
 int16_t AbsDDPars::readDConfig(const string& fname, bool verb) {
@@ -157,12 +193,16 @@ void AbsDDPars::print() const {
 }
 
 const std::vector<double>& AbsDDPars::get_c() const {
-    if (m_int.find("Crf") == m_int.end())
+    if (m_int.find("Crf") == m_int.end()) {
+        cerr << "get_c: Crf is not in m_int" << endl;
         throw new std::runtime_error("get_c: Crf is not in m_int");
+    }
     return m_int.at("Crf");
 }
 const std::vector<double>& AbsDDPars::get_s() const {
-    if (m_int.find("Srf") == m_int.end())
+    if (m_int.find("Srf") == m_int.end()) {
+        cerr << "get_s: Srf is not in m_int" << endl;
         throw new std::runtime_error("get_s: Srf is not in m_int");
+    }
     return m_int.at("Srf");
 }

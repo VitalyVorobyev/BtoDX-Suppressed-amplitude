@@ -1,9 +1,9 @@
-#ifndef DDMPARS_H
-#define DDMPARS_H
+#pragma once
 
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <map>
 
 #include "absddpars.h"
 
@@ -12,11 +12,18 @@
  * Dalitz plot and accounts for the charm mixing
  */
 class DDMPars : public AbsDDPars {
-    double m_x;  // charm mixing
-    double m_y;  // charm mixing
-    double m_cosdbeta;
-    double m_sindbeta;
-    bool m_zeromix;
+    // Aliases
+    using ddpair = std::pair<double, double>;
+    using Cache = std::map<std::string, double>;
+
+    Cache m_cache;
+    inline double cache(const std::string& name) const {
+        return m_cache.at(name);
+    }
+
+    void setBeta(double x);
+
+    bool zeroMixing() const;
 
     class Params {
      public:
@@ -26,15 +33,15 @@ class DDMPars : public AbsDDPars {
     void set_pars(int16_t bbin, int16_t dbin) const;
     mutable Params m_pars;
 
-    std::pair<double, double> coefs_dd() const;
-    std::pair<double, double> coefs_cp(int16_t xid) const;
-    std::pair<double, double> coefs_dh() const;
-    std::pair<double, double> coefs_dhcp(int16_t xid) const;
+    ddpair coefs_dd() const;
+    ddpair coefs_cp(int16_t xid) const;
+    ddpair coefs_dh() const;
+    ddpair coefs_dhcp(int16_t xid) const;
 
-    std::pair<double, double> calc_ud() const;
-    std::pair<double, double> calc_ud_dcp(int16_t xid) const;
-    std::pair<double, double> calc_ud_dh() const;
-    std::pair<double, double> calc_ud_dh_dcp(int16_t xid) const;
+    ddpair calc_ud() const;
+    ddpair calc_ud_dcp(int16_t xid) const;
+    ddpair calc_ud_dh() const;
+    ddpair calc_ud_dh_dcp(int16_t xid) const;
 
     double calc_f() const;
     double calc_f_dcp(int16_t xid) const;
@@ -42,24 +49,34 @@ class DDMPars : public AbsDDPars {
     double calc_f_dh_dcp(int16_t xid, int16_t xih) const;
 
  public:
+    /**
+     * @brief DDMPars Constructor
+     * @param beta
+     * @param x
+     * @param y
+     * @param dcfg
+     * @param bcfg
+     */
     DDMPars(double beta, double x, double y,
             const std::string& dcfg, const std::string& bcfg);
-    void set_xy(double x, double y);
-    void set_beta(double x);
+    /**
+     * @brief setParam
+     * @param name
+     * @param val
+     */
+    void setParam(const std::string &name, double val) override final;
     /**
      * Pair (ccoef, scoef), where ccoef (scoef) is a coefficient
      * near cos(dm*dt) (sin(dm*dt))
      */
-    std::pair<double, double> coefs(int16_t bbin, int16_t dbin,
-                                    dtypes dt=dtypes::KsPIPI) const override;
+    ddpair coefs(int16_t bbin, int16_t dbin,
+                 dtypes dt=dtypes::KsPIPI) const override;
     /**
      * @brief Unnormalized coefficients U_{ij} and D_{ij}
      * @param bbin. B Dalitz plot bin number
      * @param dbin. D Dalitz plot bin number
      * @return pair of double
      */
-    std::pair<double, double> rawud(int16_t bbin, int16_t dbin,
-                                    dtypes dt=dtypes::KsPIPI) const override;
+    ddpair rawud(int16_t bbin, int16_t dbin,
+                 dtypes dt=dtypes::KsPIPI) const override;
 };
-
-#endif // DDMPARS_H

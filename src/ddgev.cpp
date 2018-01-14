@@ -4,13 +4,21 @@
 #include <iostream>
 #include <fstream>
 #include <map>
+#include <exception>
 
+#include "mylibs/libTatami/toypdf.h"
 #include "mylibs/libTatami/toypdfgen.h"
+
+#include "dbevt.h"
+#include "ddbpars.h"
+#include "ddmpars.h"
+#include "absddpars.h"
 
 #include "cfg.h"
 
 using std::ofstream;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::string;
 using std::vector;
@@ -24,16 +32,14 @@ using std::make_move_iterator;
 
 constexpr bool dump = false;
 
-using DDMap = std::unordered_map<int16_t, std::unordered_map<int16_t, double>>;
-using DMap = std::unordered_map<int16_t, double>;
+using DDMap = std::map<int16_t, std::map<int16_t, double>>;
+using DMap = std::map<int16_t, double>;
 
 bool isgood_cs(const pair<double, double>& cs) {
     if (std::isnan(cs.first)     || std::isnan(cs.second) ||
         std::fabs(cs.first) > 1. || std::fabs(cs.second) > 1.) {
-        cout << "check_cs: "
-             << ", ccoef: " << cs.first
-             << ", scoef: " << cs.second
-             << endl;
+        cout << "check_cs: ccoef: " << cs.first
+             << ", scoef: " << cs.second << endl;
         return false;
     }
     return true;
@@ -59,8 +65,8 @@ DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     for (auto bbin = -m_nbins; bbin <= m_nbins; bbin++) if (bbin) {
         auto cs = pars.coefs(bbin, 0, type);
         if (!isgood_cs(cs)) {
-            cout << "DDGev::CPDalitz bbin: " << bbin << endl;
-            return evtv;
+            cerr << "DDGev::CPDalitz bbin: " << bbin << endl;
+            throw new std::runtime_error("Bad C or S");
         }
         pdf.SetCS(cs);
         auto half_nevt = static_cast<uint64_t>
@@ -107,8 +113,8 @@ DDGev::DhCP(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     cout << "C " << cs.first << ", S " << cs.second << endl;
     cout << "DhCP: getting parameters... done" << endl;
     if (!isgood_cs(cs)) {
-        cout << "DDGev::DhCP" << endl;
-        return evtv;
+        cerr << "DDGev::DhCP" << endl;
+        throw new std::runtime_error("Bad C or S");
     }
     pdf.SetCS(cs);
     auto half_nevt = nevt / 2;
@@ -166,8 +172,8 @@ void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
         cout << "Bin " << dbin << endl;
         auto cs = pars.coefs(0, dbin, dtypes::Dh);
         if (!isgood_cs(cs)) {
-            cout << "DDGev::DhDalitz Dbin: " << dbin << endl;
-            return;
+            cerr << "DDGev::DhDalitz Dbin: " << dbin << endl;
+            throw new std::runtime_error("Bad C or S");
         }
         if (dump) cout << "c " << cs.first << ", s " << cs.second << endl;
         pdf.SetCS(cs);
@@ -218,9 +224,9 @@ void DDGev::DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
         for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
             auto cs = pars.coefs(bbin, dbin, dtypes::KsPIPI);
             if (!isgood_cs(cs)) {
-                cout << "DDGev::DoubleDalitz Bbin: " << bbin
+                cerr << "DDGev::DoubleDalitz Bbin: " << bbin
                      << ", Dbin: " << dbin << endl;
-                return;
+                throw new std::runtime_error("Bad C or S");
             }
             pdf.SetCS(cs);
             auto half_nevt = static_cast<uint64_t>

@@ -26,58 +26,62 @@ constexpr bool dump = false;
 constexpr double epsilon = 0.00001;
 
 DDBPars::DDBPars(double rb, double beta, double gamma, double delb,
-                 const str& dcfg, const str& bcfg) : AbsDDPars(dcfg, bcfg) {
-    set(rb, beta, gamma);
-    set_delb(delb);
+                 const str& dcfg, const str& bcfg) : AbsDDPars(dcfg, bcfg, beta) {
+    setNewParam("rb", rb);
+    setNewParam("gamma", gamma);
+    setNewParam("delb", delb);
+
+    cout << "New DDBPars instance: rb = " << rb
+         << ", beta = " << beta
+         << ", gamma = " << gamma
+         << ", delb = " << delb
+         << endl;
+
+    setBeta(beta);
+    setGamma(gamma);
+    setRb(rb);
+    setDeltaB(delb);
+    updateCache();
+
     print();
 }
 
-void DDBPars::set(double rb, double _beta, double gamma) {
-    m_rb = rb;
-    AbsDDPars::set_beta(_beta);
-    m_gamma = gamma;
-    cout << "DDBPars: rb = " << m_rb
-         << ", beta = " << beta()
-         << ", gamma = " << m_gamma << endl;
-    m_cache["rb2"] = m_rb * m_rb;
-    m_cache["cos(2beta)"] = cos(2. * beta());
-    m_cache["sin(2beta)"] = sin(2. * beta());
-    m_cache["cos(gamma)"] = cos(m_gamma);
-    m_cache["sin(gamma)"] = sin(m_gamma);
-    cache_upd();
+void DDBPars::setParam(const std::string& name, double val) {
+    AbsDDPars::setParam(name, val);
+    if (name == "beta") setBeta(val);
+    else if (name == "gamma") setGamma(val);
+    else if (name == "rb") setRb(val);
+    else if (name == "delb") setDeltaB(val);
 }
 
-void DDBPars::set_rb(double x) {
-    m_rb = x;
-    m_cache["rb2"] = m_rb * m_rb;
+void DDBPars::setRb(double x) {
+    m_cache["rb2"] = x * x;
 }
 
-void DDBPars::set_delb(double x) {
-    cout << "DDBPars delb = " << x << endl;
-    m_delb = x;
+void DDBPars::setDeltaB(double x) {
     m_cache["sin(delb)"] = sin(x);
     m_cache["cos(delb)"] = cos(x);
 }
 
-void DDBPars::cache_upd() {
-    m_cache["cos(2beta + gamma)"] = cos(2. * beta() + m_gamma);
-    m_cache["sin(2beta + gamma)"] = sin(2. * beta() + m_gamma);
-    m_cache["cos(2beta + 2gamma)"] = cos(2. * (beta() + m_gamma));
-    m_cache["sin(2beta + 2gamma)"] = sin(2. * (beta() + m_gamma));
+void DDBPars::setBeta(double x) {
+    m_cache["cos(2beta)"] = cos(2. * x);
+    m_cache["sin(2beta)"] = sin(2. * x);
+    updateCache();
 }
 
-void DDBPars::set_beta(double x) {
-    AbsDDPars::set_beta(x);
-    m_cache["cos(2beta)"] = cos(2. * beta());
-    m_cache["sin(2beta)"] = sin(2. * beta());
-    cache_upd();
+void DDBPars::setGamma(double x) {
+    m_cache["cos(gamma)"] = cos(x);
+    m_cache["sin(gamma)"] = sin(x);
+    updateCache();
 }
 
-void DDBPars::set_gamma(double x) {
-    m_gamma = x;
-    m_cache["cos(gamma)"] = cos(m_gamma);
-    m_cache["sin(gamma)"] = sin(m_gamma);
-    cache_upd();
+void DDBPars::updateCache() {
+    const auto& beta = getParam("beta");
+    const auto& gamma = getParam("gamma");
+    m_cache["cos(2beta + gamma)"] = cos(2. * beta + gamma);
+    m_cache["sin(2beta + gamma)"] = sin(2. * beta + gamma);
+    m_cache["cos(2beta + 2gamma)"] = cos(2. * (beta + gamma));
+    m_cache["sin(2beta + 2gamma)"] = sin(2. * (beta + gamma));
 }
 
 void DDBPars::set_pars(int16_t bbin, int16_t dbin) const {
@@ -86,62 +90,63 @@ void DDBPars::set_pars(int16_t bbin, int16_t dbin) const {
     // D meson binned Dalitz params
     if (dbin > 0) {
         dbin--;  // bin to index
-        m_pars.Kp = m_int.at("K+")[dbin];
-        m_pars.Kn = m_int.at("K-")[dbin];
-        m_pars.C = m_int.at("C")[dbin];
-        m_pars.S = m_int.at("S")[dbin];
+        m_pars.Kp = getInt("K+", dbin);
+        m_pars.Kn = getInt("K-", dbin);
+        m_pars.C = getInt("C", dbin);
+        m_pars.S = getInt("S", dbin);
     } else if (dbin < 0) {
         dbin = -dbin - 1;  // bin to index
-        m_pars.Kp = m_int.at("K-")[dbin];
-        m_pars.Kn = m_int.at("K+")[dbin];
-        m_pars.C = m_int.at("C")[dbin];
-        m_pars.S = -m_int.at("S")[dbin];
+        m_pars.Kp = getInt("K-", dbin);
+        m_pars.Kn = getInt("K+", dbin);
+        m_pars.C = getInt("C", dbin);
+        m_pars.S = -getInt("S", dbin);
     }
     if (bbin > 0) {
         bbin--;
-        m_pars.Kprf = m_int.at("K+rf")[bbin];
-        m_pars.Knrf = m_int.at("K-rf")[bbin];
-        m_pars.Crf = m_int.at("Crf")[bbin];
-        m_pars.Srf = m_int.at("Srf")[bbin];
+        m_pars.Kprf = getInt("K+rf", bbin);
+        m_pars.Knrf = getInt("K-rf", bbin);
+        m_pars.Crf = getInt("Crf", bbin);
+        m_pars.Srf = getInt("Srf", bbin);
     } else if (bbin < 0) {
         bbin = -bbin - 1;
-        m_pars.Kprf = m_int.at("K-rf")[bbin];
-        m_pars.Knrf = m_int.at("K+rf")[bbin];
-        m_pars.Crf = m_int.at("Crf")[bbin];
-        m_pars.Srf = -m_int.at("Srf")[bbin];
+        m_pars.Kprf = getInt("K-rf", bbin);
+        m_pars.Knrf = getInt("K+rf", bbin);
+        m_pars.Crf = getInt("Crf", bbin);
+        m_pars.Srf = -getInt("Srf", bbin);
     }
-    if (m_rb < epsilon) return;
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return;
     // B meson binned Dalitz params
     if (bbin > 0) {
-        m_pars.Kpwf = m_int.at("K+wf")[bbin];
-        m_pars.Knwf = m_int.at("K-wf")[bbin];
-        m_pars.Cwf = m_int.at("Cwf")[bbin];
-        m_pars.Swf = m_int.at("Swf")[bbin];
+        m_pars.Kpwf = getInt("K+wf", bbin);
+        m_pars.Knwf = getInt("K-wf", bbin);
+        m_pars.Cwf = getInt("Cwf", bbin);
+        m_pars.Swf = getInt("Swf", bbin);
 
-        m_pars.Ctp = m_int.at("Ctp")[bbin];
-        m_pars.Stp = m_int.at("Stp")[bbin];
-        m_pars.Ctn = m_int.at("Ctn")[bbin];
-        m_pars.Stn = m_int.at("Stn")[bbin];
+        m_pars.Ctp = getInt("Ctp", bbin);
+        m_pars.Stp = getInt("Stp", bbin);
+        m_pars.Ctn = getInt("Ctn", bbin);
+        m_pars.Stn = getInt("Stn", bbin);
 
-        m_pars.Cpp = m_int.at("Cpp")[bbin];
-        m_pars.Spp = m_int.at("Spp")[bbin];
-        m_pars.Cpn = m_int.at("Cpn")[bbin];
-        m_pars.Spn = m_int.at("Spn")[bbin];
+        m_pars.Cpp = getInt("Cpp", bbin);
+        m_pars.Spp = getInt("Spp", bbin);
+        m_pars.Cpn = getInt("Cpn", bbin);
+        m_pars.Spn = getInt("Spn", bbin);
     } else if (bbin < 0) {
-        m_pars.Kpwf = m_int.at("K-wf")[bbin];
-        m_pars.Knwf = m_int.at("K+wf")[bbin];
-        m_pars.Cwf = m_int.at("Cwf")[bbin];
-        m_pars.Swf = -m_int.at("Swf")[bbin];
+        m_pars.Kpwf = getInt("K-wf", bbin);
+        m_pars.Knwf = getInt("K+wf", bbin);
+        m_pars.Cwf = getInt("Cwf", bbin);
+        m_pars.Swf = -getInt("Swf", bbin);
 
-        m_pars.Ctp = m_int.at("Ctn")[bbin];
-        m_pars.Stp = m_int.at("Stn")[bbin];
-        m_pars.Ctn = m_int.at("Ctp")[bbin];
-        m_pars.Stn = m_int.at("Stp")[bbin];
+        m_pars.Ctp = getInt("Ctn", bbin);
+        m_pars.Stp = getInt("Stn", bbin);
+        m_pars.Ctn = getInt("Ctp", bbin);
+        m_pars.Stn = getInt("Stp", bbin);
 
-        m_pars.Cpp = m_int.at("Cpn")[bbin];
-        m_pars.Spp = m_int.at("Spn")[bbin];
-        m_pars.Cpn = m_int.at("Cpp")[bbin];
-        m_pars.Spn = m_int.at("Spp")[bbin];
+        m_pars.Cpp = getInt("Cpn", bbin);
+        m_pars.Spp = getInt("Spn", bbin);
+        m_pars.Cpn = getInt("Cpp", bbin);
+        m_pars.Spn = getInt("Spp", bbin);
     }
 }
 
@@ -153,32 +158,32 @@ DDBPars::ddpair DDBPars::calc_ud() const {
     auto p12 = m_pars.Kp * m_pars.Knrf;
     auto p1 = 0.5 * (p11 + p12);
 
-    if (m_rb < epsilon)
+    const auto rb = getParam("rb");
+    if (rb < epsilon)
         return make_pair(p1, 0.5 * (p11 - p12));
 
-    auto p20 = m_rb * sqrt(KpKn * m_pars.Kprf * m_pars.Kpwf);
+    auto p20 = rb * sqrt(KpKn * m_pars.Kprf * m_pars.Kpwf);
     auto p21 = (m_pars.Ctp * m_pars.C +
-                m_pars.Stp * m_pars.S) * m_cache.at("cos(gamma)");
+                m_pars.Stp * m_pars.S) * cache("cos(gamma)");
     auto p22 = (m_pars.Ctp * m_pars.S +
-                m_pars.Stp * m_pars.C) * m_cache.at("sin(gamma)");
+                m_pars.Stp * m_pars.C) * cache("sin(gamma)");
     auto p2 = p20 * (p21 - p22);
 
-    auto p30 = m_rb * sqrt(KpKn * m_pars.Knrf * m_pars.Knwf);
+    auto p30 = rb * sqrt(KpKn * m_pars.Knrf * m_pars.Knwf);
     auto p31 = (m_pars.Ctn * m_pars.C -
-                m_pars.Stn * m_pars.S) * m_cache.at("cos(gamma)");
+                m_pars.Stn * m_pars.S) * cache("cos(gamma)");
     auto p32 = (m_pars.Ctn * m_pars.S +
-                m_pars.Stn * m_pars.C) * m_cache.at("sin(gamma)");
+                m_pars.Stn * m_pars.C) * cache("sin(gamma)");
     auto p3 = p30 * (p31 - p32);
 
     auto p41 = m_pars.Kp * m_pars.Kpwf;
     auto p42 = m_pars.Kn * m_pars.Knwf;
-    auto p4 = 0.5 * m_cache.at("rb2") * (p41 + p42);
-
+    auto p4 = 0.5 * cache("rb2") * (p41 + p42);
     auto u = p1 + p2 + p3 + p4;
 
     // Calcuate D //
     p1 = 0.5 * (p11 - p12);
-    p4 = 0.5 * m_cache.at("rb2") * (p41 - p42);
+    p4 = 0.5 * cache("rb2") * (p41 - p42);
     auto d = p1 + p2 - p3 + p4;
     return make_pair(u, d);
 }
@@ -189,28 +194,30 @@ double DDBPars::calc_f() const {
     auto KpKn = m_pars.Kp * m_pars.Kn;
     auto p10 = sqrt(KpKn * m_pars.Kprf * m_pars.Knrf);
     auto p11 = (m_pars.Srf * m_pars.C -
-                m_pars.Crf * m_pars.S) * m_cache.at("cos(2beta)");
+                m_pars.Crf * m_pars.S) * cache("cos(2beta)");
     auto p12 = (m_pars.Crf * m_pars.C +
-                m_pars.Srf * m_pars.S) * m_cache.at("sin(2beta)");
+                m_pars.Srf * m_pars.S) * cache("sin(2beta)");
     auto p1 = -p10 * (p11 - p12);
-    if (m_rb < epsilon) return p1;
 
-    auto p20 = m_rb * m_pars.Kn * sqrt(m_pars.Kprf * m_pars.Knwf);
-    auto p21 = m_pars.Cpp * m_cache.at("sin(2beta + gamma)");
-    auto p22 = m_pars.Spp * m_cache.at("cos(2beta + gamma)");
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return p1;
+
+    auto p20 = rb * m_pars.Kn * sqrt(m_pars.Kprf * m_pars.Knwf);
+    auto p21 = m_pars.Cpp * cache("sin(2beta + gamma)");
+    auto p22 = m_pars.Spp * cache("cos(2beta + gamma)");
     auto p2 = p20 * (p21 - p22);
 
-    auto p30 = m_rb * m_pars.Kp * sqrt(m_pars.Knrf * m_pars.Kpwf);
-    auto p31 = m_pars.Cpn * m_cache.at("sin(2beta + gamma)");
-    auto p32 = m_pars.Spn * m_cache.at("cos(2beta + gamma)");
+    auto p30 = rb * m_pars.Kp * sqrt(m_pars.Knrf * m_pars.Kpwf);
+    auto p31 = m_pars.Cpn * cache("sin(2beta + gamma)");
+    auto p32 = m_pars.Spn * cache("cos(2beta + gamma)");
     auto p3 = p30 * (p31 + p32);
 
     auto p40 = 0.5 * m_cache.at("rb2") *
             sqrt(KpKn * m_pars.Kpwf * m_pars.Knwf);
     auto p41 = (m_pars.Swf * m_pars.C +
-                m_pars.Cwf * m_pars.S) * m_cache.at("cos(2beta + 2gamma)");
+                m_pars.Cwf * m_pars.S) * cache("cos(2beta + 2gamma)");
     auto p42 = (m_pars.Cwf * m_pars.C -
-                m_pars.Swf * m_pars.S) * m_cache.at("sin(2beta + 2gamma)");
+                m_pars.Swf * m_pars.S) * cache("sin(2beta + 2gamma)");
     auto p4 = -p40 * (p41 - p42);
     return p1 + p2 + p3 + p4;
 }
@@ -218,15 +225,17 @@ double DDBPars::calc_f() const {
 DDBPars::ddpair DDBPars::calc_ud_cp(int xiD) const {
     if (dump) cout << "calc_ud_cp" << endl;
     // Calculate U and D //
-    auto Xplus = 0.5 * (m_pars.Kprf + m_cache.at("rb2") * m_pars.Kpwf);
-    auto Xmins = 0.5 * (m_pars.Knrf + m_cache.at("rb2") * m_pars.Knwf);
-    if (m_rb >= epsilon) {
-        Xplus += xiD * m_rb * sqrt(m_pars.Kprf * m_pars.Kpwf) *
-                (m_pars.Ctp * m_cache.at("cos(gamma)") -
-                 m_pars.Stp * m_cache.at("sin(gamma)"));
-        Xmins += xiD * m_rb * sqrt(m_pars.Knrf * m_pars.Knwf) *
-                (m_pars.Ctn * m_cache.at("cos(gamma)") +
-                 m_pars.Stn * m_cache.at("sin(gamma)"));
+    auto Xplus = 0.5 * (m_pars.Kprf + cache("rb2") * m_pars.Kpwf);
+    auto Xmins = 0.5 * (m_pars.Knrf + cache("rb2") * m_pars.Knwf);
+
+    const auto rb = getParam("rb");
+    if (rb >= epsilon) {
+        Xplus += xiD * rb * sqrt(m_pars.Kprf * m_pars.Kpwf) *
+                (m_pars.Ctp * cache("cos(gamma)") -
+                 m_pars.Stp * cache("sin(gamma)"));
+        Xmins += xiD * rb * sqrt(m_pars.Knrf * m_pars.Knwf) *
+                (m_pars.Ctn * cache("cos(gamma)") +
+                 m_pars.Stn * cache("sin(gamma)"));
     }
     return make_pair(Xplus + Xmins, Xplus - Xmins);
 }
@@ -235,73 +244,100 @@ double DDBPars::calc_f_cp(int xiD) const {
     if (dump) cout << "calc_f_cp" << endl;
     // Calculate F//
     auto Y0 = xiD * sqrt(m_pars.Kprf * m_pars.Knrf) *
-            (m_pars.Crf * m_cache.at("sin(2beta)") -
-             m_pars.Srf * m_cache.at("cos(2beta)"));
-    if (m_rb < epsilon) return Y0;
-    auto Xplus = m_rb * sqrt(m_pars.Kprf * m_pars.Kpwf) *
-            (m_pars.Cpp * m_cache.at("sin(2beta + gamma)") -
-             m_pars.Spp * m_cache.at("cos(2beta + gamma)"));
-    auto Xmins = m_rb * sqrt(m_pars.Knrf * m_pars.Knwf) *
-            (-m_pars.Cpn * m_cache.at("sin(2beta + gamma)") -
-              m_pars.Spn * m_cache.at("cos(2beta + gamma)"));
-    auto Y2 = xiD * m_cache.at("rb2") * sqrt(m_pars.Kpwf * m_pars.Knwf) *
-            (m_pars.Cwf * m_cache.at("sin(2beta + 2gamma)") -
-             m_pars.Swf * m_cache.at("cos(2beta + 2gamma)"));
+            (m_pars.Crf * cache("sin(2beta)") -
+             m_pars.Srf * cache("cos(2beta)"));
+
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return Y0;
+    auto Xplus = rb * sqrt(m_pars.Kprf * m_pars.Kpwf) *
+            (m_pars.Cpp * cache("sin(2beta + gamma)") -
+             m_pars.Spp * cache("cos(2beta + gamma)"));
+    auto Xmins = rb * sqrt(m_pars.Knrf * m_pars.Knwf) *
+            (-m_pars.Cpn * cache("sin(2beta + gamma)") -
+              m_pars.Spn * cache("cos(2beta + gamma)"));
+    auto Y2 = xiD * cache("rb2") * sqrt(m_pars.Kpwf * m_pars.Knwf) *
+            (m_pars.Cwf * cache("sin(2beta + 2gamma)") -
+             m_pars.Swf * cache("cos(2beta + 2gamma)"));
     return Y0 + Xplus - Xmins + Y2;
 }
 
 DDBPars::ddpair DDBPars::calc_ud_dh() const {
     if (dump) cout << "calc_ud_dh" << endl;
     // Calculate U and D //
-    auto u = 0.5 * (1. + m_cache.at("rb2")) * (m_pars.Knrf + m_pars.Kprf);
-    auto d = 0.5 * (1. - m_cache.at("rb2")) * (m_pars.Knrf - m_pars.Kprf);
-    if (m_rb >= epsilon) {
-        const auto sqrtkk = sqrt(m_pars.Kprf * m_pars.Knrf);
-        u += 2. * m_rb * sqrtkk * m_cache.at("cos(delb)") *
-                (m_pars.C * m_cache.at("cos(gamma)") -
-                 m_pars.S * m_cache.at("sin(gamma)"));
-        d += 2. * m_rb * sqrtkk * m_cache.at("sin(delb)") *
-                (m_pars.S * m_cache.at("cos(gamma)") -
-                 m_pars.C * m_cache.at("sin(gamma)"));
+    auto u = 0.5 * (1. + cache("rb2")) * (m_pars.Kn + m_pars.Kp);
+    auto d = 0.5 * (1. - cache("rb2")) * (m_pars.Kn - m_pars.Kp);
+
+    if (dump) cout << "Zero rb: " << endl
+                   << "  u = " << u << endl
+                   << "  d = " << d << endl;
+
+    const auto rb = getParam("rb");
+    if (rb >= epsilon) {
+        const auto sqrtkk = sqrt(m_pars.Kp * m_pars.Kn);
+        u += 2. * rb * sqrtkk * cache("cos(delb)") *
+                (m_pars.C * cache("cos(gamma)") +
+                 m_pars.S * cache("sin(gamma)"));
+        d += 2. * rb * sqrtkk * m_cache.at("sin(delb)") *
+                (m_pars.S * cache("cos(gamma)") -
+                 m_pars.C * cache("sin(gamma)"));
     }
+
+    if (dump) cout << "Non-zero rb: " << endl
+                   << "  u = " << u << endl
+                   << "  d = " << d << endl;
     return make_pair(u, d);
 }
 
 double DDBPars::calc_f_dh() const {
     if (dump) cout << "calc_f_dh" << endl;
     // Calculate F//
-    auto f0 = sqrt(m_pars.Kprf * m_pars.Knrf) *
-            (m_pars.C * m_cache.at("sin(2beta)") +
-             m_pars.S * m_cache.at("cos(2beta)"));
-    if (m_rb < epsilon) return f0;
-    auto prod1 = m_cache.at("sin(2beta + gamma)") * m_cache.at("cos(delb)");
-    auto prod2 = m_cache.at("cos(2beta + gamma)") * m_cache.at("sin(delb)");
-    auto f11 = m_pars.Knrf * (prod1 + prod2);
-    auto f12 = m_pars.Kprf * (prod1 - prod2);
-    auto f2 = -m_cache.at("rb2") *
-            (m_pars.S * m_cache.at("cos(2beta + 2gamma)") -
-             m_pars.C * m_cache.at("sin(2beta + 2gamma)"));
-    return f0 + m_rb * (f11 + f12) + f2;
+    auto f0 = sqrt(m_pars.Kp * m_pars.Kn) *
+            (m_pars.C * cache("sin(2beta)") +
+             m_pars.S * cache("cos(2beta)"));
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return f0;
+    auto prod1 = cache("sin(2beta + gamma)") * cache("cos(delb)");
+    auto prod2 = cache("cos(2beta + gamma)") * cache("sin(delb)");
+    auto f11 = m_pars.Kp * (prod1 + prod2);
+    auto f12 = m_pars.Kn * (prod1 - prod2);
+    auto f2 = cache("rb2") *
+            (m_pars.C * cache("sin(2beta + 2gamma)") -
+             m_pars.S * cache("cos(2beta + 2gamma)"));
+    if (dump) cout << " f0:  " << f0 << endl
+                   << " f11: " << f11 << endl
+                   << " f12: " << f12 << endl
+                   << " f1:  " << rb * (f11 + f12) << endl
+                   << " f2:  " << f2 << endl
+                   << " rb:  " << rb << endl
+                   << " rb2: " << cache("rb2") << endl
+                   << " f : " << f0 + rb * (f11 + f12) + f2 << endl;
+    if (dump) cout << "f2 = " << cache("rb2") << " * (" << m_pars.C << " * "
+                   << cache("sin(2beta + 2gamma)") << " - " << m_pars.S << " * "
+                   << cache("cos(2beta + 2gamma)") << ")" << endl;
+    return f0 + rb * (f11 + f12) + f2;
 }
 
 DDBPars::ddpair DDBPars::calc_ud_dhcp(int xiD) const {
     if (dump) cout << "calc_ud_dhcp" << endl;
-    if (m_rb < epsilon) return make_pair(1., 0.);
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return make_pair(1., 0.);
     // Calculate U and D//
-    auto u = 1. + m_cache.at("rb2") + 2. * xiD * m_rb *
-             m_cache.at("cos(delb)") * m_cache.at("cos(gamma)");
-    auto d = -2. * xiD * m_rb *
-             m_cache.at("sin(delb)") * m_cache.at("sin(gamma)");
+    auto u = 1. + cache("rb2") + 2. * xiD * rb *
+             cache("cos(delb)") * cache("cos(gamma)");
+    auto d = -2. * xiD * rb *
+             cache("sin(delb)") * cache("sin(gamma)");
     return make_pair(u, d);
 }
 
 double DDBPars::calc_f_dhcp(int xiD) const {
     if (dump) cout << "calc_f_dhcp" << endl;
     // Calculate F//
-    auto f0 = xiD * m_cache.at("sin(2beta)");
-    if (m_rb < epsilon) return f0;
-    auto f1 = -2. * m_rb * m_cache.at("cos(delb)") * m_cache.at("sin(2beta + gamma)");
-    auto f2 = m_cache.at("rb2") * xiD * m_cache.at("sin(2beta + 2gamma)");
+    auto f0 = xiD * cache("sin(2beta)");
+
+    const auto rb = getParam("rb");
+    if (rb < epsilon) return f0;
+    auto f1 = 2. * rb * cache("cos(delb)") * cache("sin(2beta + gamma)");
+    auto f2 = cache("rb2") * xiD * cache("sin(2beta + 2gamma)");
     return f0 + f1 + f2;
 }
 
@@ -320,7 +356,17 @@ DDBPars::ddpair DDBPars::coefs_cp(int xiD) const {
 DDBPars::ddpair DDBPars::coefs_dh() const {
     auto ud = calc_ud_dh();
     auto f = calc_f_dh();
-    return make_pair(ud.second / ud.first, f / ud.first);
+    auto c = ud.second / ud.first;
+    auto s = f / ud.first;
+    if (std::fabs(s) > 1.) {
+        static bool flag = true;
+        if (flag) {
+            cerr << "WARNING: |s| > 1" << endl;
+            flag = false;
+        }
+        s = s > 0 ? 1. : -1.;
+    }
+    return make_pair(c, s);
 }
 
 DDBPars::ddpair DDBPars::coefs_dhcp(int xiD) const {
@@ -338,6 +384,9 @@ DDBPars::ddpair DDBPars::coefs(int16_t bbin, int16_t dbin, dtypes dt) const {
     case dtypes::Dh:     return coefs_dh();
     case dtypes::DhCPn:  return coefs_dhcp(-1);
     case dtypes::DhCPp:  return coefs_dhcp(1);
+    case dtypes::DKs:    return coefs_dh();
+    case dtypes::DCPnKs: return coefs_dhcp(-1);
+    case dtypes::DCPpKs: return coefs_dhcp(1);
     default: return make_pair(1., 0.);
     }
 }
@@ -352,6 +401,9 @@ DDBPars::ddpair DDBPars::rawud(int16_t bbin, int16_t dbin, dtypes dt) const {
     case dtypes::Dh:     return calc_ud_dh();
     case dtypes::DhCPn:  return calc_ud_dhcp(-1);
     case dtypes::DhCPp:  return calc_ud_dhcp(1);
+    case dtypes::DKs:    return calc_ud_dh();
+    case dtypes::DCPnKs: return calc_ud_dhcp(-1);
+    case dtypes::DCPpKs: return calc_ud_dhcp(1);
     default: return make_pair(1., 0.);
     }
 }

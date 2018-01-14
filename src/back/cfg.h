@@ -7,6 +7,7 @@
 #include "fitmodes.h"
 
 // Forward declarations
+//class BinnedParams;
 class DDBPars;
 class DDMPars;
 namespace libTatami {
@@ -43,6 +44,8 @@ class Cfg {
  public:
     static void print_config();
 
+//    static Lambda_b2cud lamf(dtypes type);
+//    static Lambda_b2cud lamf0(dtypes type);
     static std::pair<int, int> nevts(dtypes type);
     static std::string dfile(dtypes type, uint32_t nevt=0);
     static libTatami::ToyPdf pdf();
@@ -60,8 +63,9 @@ class Cfg {
     static double get_x() {return charm_x;}
     static double get_y() {return charm_y;}
 
+//    static std::unique_ptr<BinnedParams> bpars(bool approx=false);
     static std::unique_ptr<DDBPars> wfpars(const std::string& dcfg,
-                                           const std::string& bcfg);
+                                      const std::string& bcfg);
     static std::unique_ptr<DDBPars> wfpars(uint16_t seed, uint16_t idx);
     static std::unique_ptr<DDMPars> cmpars(const std::string& dcfg,
                                            const std::string& bcfg);

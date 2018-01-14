@@ -1,18 +1,17 @@
-#ifndef DDGEV_H
-#define DDGEV_H
+#pragma once
 
 #include <utility>  // pair
 #include <vector>
 #include <string>
 #include <memory>
+#include <cstdint>
 
-#include "mylibs/libTatami/toypdf.h"
-
-#include "dbevt.h"
-#include "ddbpars.h"
-#include "ddmpars.h"
-#include "absddpars.h"
 #include "fitmodes.h"
+
+// Forward declarations
+class DBEvt;
+class BEvt;
+class AbsDDPars;
 
 /**
  * @brief The DDGev class generates all types of B0 -> D0 {pi+ pi-, h0} events
@@ -33,15 +32,13 @@ class DDGev {
     /** @brief Generate B0 -> Dcp pi+ pi- events */
     static void CPDalitz(uint64_t ncpp, uint64_t ncpn, const AbsDDPars& pars,
                          const std::string& fname);
-    /** @brief Generate B0 -> D0 pi+ pi-, D0 -> Ks0 pi+ pi- events */
+    /** @brief Generate B0 -> [D0 -> Ks0 pi+ pi-] pi+ pi- events */
     static void DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
                              const std::string &fname);
-    /** @brief Generate B0 -> Dcp h0 events */
+    /** @brief Generate B0 -> Dcp {h0, Ks0} events */
     static void DhCP(uint64_t ncpp, uint64_t ncpn, const AbsDDPars& pars,
                      const std::string& fname);
-    /** @brief Generate B0 -> D0 h0, D0 -> Ks0 pi+ pi- events */
+    /** @brief Generate B0 -> [D0 -> Ks0 pi+ pi-] {h0, Ks0} events */
     static void DhDalitz(uint64_t nevt, const AbsDDPars& pars,
                          const std::string& fname);
 };
-
-#endif // DDGEV_H

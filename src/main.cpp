@@ -22,7 +22,7 @@ const map<string, fitmode> mode_map = {
 const map<string, double> pars = {
     {"x", 0.01},
     {"y", 0.01},
-    {"rb", 0.02},
+    {"rb", 0.2},
     {"beta", 23.},
     {"dtlim", 70.}
 };
@@ -36,23 +36,37 @@ int main(int argc, char** argv) {
     Cfg::set_charm_mix(x, y);
     Cfg::print_config();
 
-    const auto bdecay = bmode::dpp;
+    const auto bdecay = bmode::DKs;
+    const double delb = 0.;
+    constexpr uint64_t nevt = 100000;
+    Cfg::set_delb(delb);
+    cout << "New delb " << delb << endl;
+    WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
+    WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
+    WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
 
-    constexpr uint64_t nevt = 1000000;
+//    for (double delb = 0.; delb < 360.; delb += 10) {
+//        Cfg::set_delb(delb);
+//        cout << "New delb " << delb << endl;
+//        WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
+//        WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
+//        WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
+//    }
+
 //    constexpr uint16_t sb = 0;
-    for (double delb = 0.; delb < 360.; delb += 10) {
-        Cfg::set_delb(delb);
-        cout << "New delb " << delb << endl;
-        WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt);
-        WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 100, nevt);
-        WFDriver::fit_with_wf(bdecay, fitmode::Corrected, pars.at("rb"));
-        WFDriver::fit_with_wf(bdecay, fitmode::Full, pars.at("rb"));
-    }
+//    for (double delb = 0.; delb < 360.; delb += 10) {
+//        Cfg::set_delb(delb);
+//        cout << "New delb " << delb << endl;
+//        WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt);
+//        WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 100, nevt);
+//        WFDriver::fit_with_wf(bdecay, fitmode::Corrected, pars.at("rb"));
+//        WFDriver::fit_with_wf(bdecay, fitmode::Full, pars.at("rb"));
+//    }
 
-//    WFDriver::gen_dd_with_charm_mix(bdecay, pars.at("x"), pars.at("y"), nevt);
-//    WFDriver::gen_cp_with_charm_mix(bdecay, pars.at("x"), pars.at("y"), nevt, 100);
-//    WFDriver::fit_with_charm_mix(bdecay, fitmode::Corrected, pars.at("x"), pars.at("y"));
-//    WFDriver::fit_with_charm_mix(bdecay, fitmode::Full, pars.at("x"), pars.at("y"));
+//   WFDriver::gen_dd_with_charm_mix(bdecay, pars.at("x"), pars.at("y"), nevt);
+//   WFDriver::gen_cp_with_charm_mix(bdecay, pars.at("x"), pars.at("y"), nevt, 100);
+//   WFDriver::fit_with_charm_mix(bdecay, fitmode::Corrected, pars.at("x"), pars.at("y"));
+//   WFDriver::fit_with_charm_mix(bdecay, fitmode::Full, pars.at("x"), pars.at("y"));
 
 //    constexpr uint16_t idxlo = 0;
 //    constexpr uint16_t idxhi = 100;
