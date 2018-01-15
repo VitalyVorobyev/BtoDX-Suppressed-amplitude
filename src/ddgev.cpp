@@ -14,8 +14,6 @@
 #include "ddmpars.h"
 #include "absddpars.h"
 
-#include "cfg.h"
-
 using std::ofstream;
 using std::cout;
 using std::cerr;
@@ -32,6 +30,8 @@ using std::make_move_iterator;
 
 constexpr bool dump = false;
 
+Cfg::ExpSetup DDGev::m_expCfg = Cfg::ExpSetup::Perfect;
+
 using DDMap = std::map<int16_t, std::map<int16_t, double>>;
 using DMap = std::map<int16_t, double>;
 
@@ -47,10 +47,10 @@ bool isgood_cs(const pair<double, double>& cs) {
 
 unique_ptr<DDGev::pBEvtVec>
 DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
-    auto pdf = Cfg::pdf();  // Toy PDF
+    auto pdf = Cfg::pdf(m_expCfg);  // Toy PDF
     double rate_norm = 0;
     DMap rates;
-    const double alpha = pdf.alpha();
+    const double alpha = pdf->alpha();
     for (auto bbin = -m_nbins; bbin <= m_nbins; bbin++) if (bbin) {
         auto ud = pars.rawud(bbin, 0, type);
         auto rate = ud.first + alpha * ud.second;
@@ -60,7 +60,7 @@ DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
     cout << "DDGev: " << endl
          << "  alpha: " << alpha << endl
          << "  rnorm: " << rate_norm << endl;
-    libTatami::ToyPdfGen gen(pdf);  // generator
+    libTatami::ToyPdfGen gen(*pdf);  // generator
     auto evtv = make_unique<pBEvtVec>();  // vector of events
     for (auto bbin = -m_nbins; bbin <= m_nbins; bbin++) if (bbin) {
         auto cs = pars.coefs(bbin, 0, type);
@@ -68,14 +68,14 @@ DDGev::CPDalitz(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
             cerr << "DDGev::CPDalitz bbin: " << bbin << endl;
             throw new std::runtime_error("Bad C or S");
         }
-        pdf.SetCS(cs);
+        pdf->SetCS(cs);
         auto half_nevt = static_cast<uint64_t>
                 (0.5 * nevt * rates[bbin] / rate_norm);
-        pdf.SetTag(1);
+        pdf->SetTag(1);
         auto times = gen.Generate(half_nevt, true);
         for (auto t : times)
             evtv->emplace_back(make_unique<BEvt>(t, 1, bbin, type));
-        pdf.SetTag(-1);
+        pdf->SetTag(-1);
         times = gen.Generate(half_nevt, true);
         for (auto t : times)
             evtv->emplace_back(make_unique<BEvt>(t, -1, bbin, type));
@@ -103,10 +103,10 @@ void DDGev::CPDalitz(uint64_t ncpp, uint64_t ncpn, const AbsDDPars& pars,
 
 unique_ptr<DDGev::pBEvtVec>
 DDGev::DhCP(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
-    auto pdf = Cfg::pdf();  // Toy PDF
+    auto pdf = Cfg::pdf(m_expCfg);  // Toy PDF
     cout << "DhCP: " << endl
-         << "  alpha: " << pdf.alpha() << endl;
-    libTatami::ToyPdfGen gen(pdf);  // generator
+         << "  alpha: " << pdf->alpha() << endl;
+    libTatami::ToyPdfGen gen(*pdf);  // generator
     auto evtv = make_unique<pBEvtVec>();  // vector of events
     cout << "DhCP: getting parameters..." << endl;
     auto cs = pars.coefs(0, 0, type);
@@ -116,16 +116,16 @@ DDGev::DhCP(uint64_t nevt, const AbsDDPars& pars, dtypes type) {
         cerr << "DDGev::DhCP" << endl;
         throw new std::runtime_error("Bad C or S");
     }
-    pdf.SetCS(cs);
+    pdf->SetCS(cs);
     auto half_nevt = nevt / 2;
-    pdf.SetTag(1);
+    pdf->SetTag(1);
     cout << "DhCP: generating..." << endl;
     auto times = gen.Generate(half_nevt, true);
     cout << "DhCP: generating... done " << times.size()
          << "/" << half_nevt << " " << nevt << endl;
     for (auto t : times)
         evtv->emplace_back(make_unique<BEvt>(t, 1, 0, type));
-    pdf.SetTag(-1);
+    pdf->SetTag(-1);
     times = gen.Generate(half_nevt, true);
     for (auto t : times)
         evtv->emplace_back(make_unique<BEvt>(t, -1, 0, type));
@@ -152,11 +152,11 @@ void DDGev::DhCP(uint64_t ncpp, uint64_t ncpn, const AbsDDPars& pars,
 
 void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
                      const string& fname) {
-    auto pdf = Cfg::pdf();  // Toy PDF
+    auto pdf = Cfg::pdf(m_expCfg);  // Toy PDF
     // Decay rates //
     double rate_norm = 0;
     DMap rates;
-    const double alpha = pdf.alpha();
+    const double alpha = pdf->alpha();
     for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
         auto ud = pars.rawud(0, dbin, dtypes::Dh);
         auto rate = ud.first + alpha * ud.second;
@@ -166,7 +166,7 @@ void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
     cout << "DhDalitz: " << endl
          << "  alpha: " << alpha << endl
          << "  rnorm: " << rate_norm << endl;
-    libTatami::ToyPdfGen gen(pdf);  // generator
+    libTatami::ToyPdfGen gen(*pdf);  // generator
     vector<unique_ptr<BEvt>> evtv;  // vector of events
     for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
         cout << "Bin " << dbin << endl;
@@ -176,16 +176,16 @@ void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
             throw new std::runtime_error("Bad C or S");
         }
         if (dump) cout << "c " << cs.first << ", s " << cs.second << endl;
-        pdf.SetCS(cs);
+        pdf->SetCS(cs);
         auto half_nevt = static_cast<uint64_t>
                 (0.5 * nevt * rates[dbin] / rate_norm);
-        pdf.SetTag(1);
+        pdf->SetTag(1);
         if (dump) cout << "DDGev::DhDalitz: time generation" << endl;
         auto times = gen.Generate(half_nevt, true);
         if (dump) cout << "DDGev::DhDalitz: time generated " << times.size() << endl;
         for (auto t : times)
             evtv.emplace_back(make_unique<BEvt>(t, 1, dbin, dtypes::Dh));
-        pdf.SetTag(-1);
+        pdf->SetTag(-1);
         times = gen.Generate(half_nevt, true);
         for (auto t : times)
             evtv.emplace_back(make_unique<BEvt>(t, -1, dbin, dtypes::Dh));
@@ -202,11 +202,11 @@ void DDGev::DhDalitz(uint64_t nevt, const AbsDDPars& pars,
 
 void DDGev::DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
                           const string& fname) {
-    auto pdf = Cfg::pdf();  // Toy PDF
+    auto pdf = Cfg::pdf(m_expCfg);  // Toy PDF
     // Decay rates //
     double rate_norm = 0;
     DDMap rates;
-    const double alpha = pdf.alpha();
+    const double alpha = pdf->alpha();
     for (auto bbin = -8; bbin <= 8; bbin++) if (bbin) {
         for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
             auto ud = pars.rawud(bbin, dbin, dtypes::KsPIPI);
@@ -218,7 +218,7 @@ void DDGev::DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
     cout << "DoubleDalitzWithWF: " << endl
          << "  alpha: " << alpha << endl
          << "  rnorm: " << rate_norm << endl;
-    libTatami::ToyPdfGen gen(pdf);  // generator
+    libTatami::ToyPdfGen gen(*pdf);  // generator
     vector<unique_ptr<DBEvt>> evtv;  // vector of events
     for (auto bbin = -8; bbin <= 8; bbin++) if (bbin) {
         for (auto dbin = -8; dbin <= 8; dbin++) if (dbin) {
@@ -228,14 +228,14 @@ void DDGev::DoubleDalitz(uint64_t nevt, const AbsDDPars& pars,
                      << ", Dbin: " << dbin << endl;
                 throw new std::runtime_error("Bad C or S");
             }
-            pdf.SetCS(cs);
+            pdf->SetCS(cs);
             auto half_nevt = static_cast<uint64_t>
                     (0.5 * nevt * rates[bbin][dbin] / rate_norm);
-            pdf.SetTag(1);
+            pdf->SetTag(1);
             auto times = gen.Generate(half_nevt, true);
             for (auto t : times)
                 evtv.emplace_back(make_unique<DBEvt>(t, 1, dbin, bbin));
-            pdf.SetTag(-1);
+            pdf->SetTag(-1);
             times = gen.Generate(half_nevt, true);
             for (auto t : times)
                 evtv.emplace_back(make_unique<DBEvt>(t, -1, dbin, bbin));

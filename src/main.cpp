@@ -5,6 +5,8 @@
 
 #include "wfdriver.h"
 #include "cfg.h"
+#include "cpvminimizer.h"
+#include "ddgev.h"
 
 using std::cout;
 using std::endl;
@@ -22,7 +24,7 @@ const map<string, fitmode> mode_map = {
 const map<string, double> pars = {
     {"x", 0.01},
     {"y", 0.01},
-    {"rb", 0.2},
+    {"rb", 0.22},
     {"beta", 23.},
     {"dtlim", 70.}
 };
@@ -35,23 +37,42 @@ int main(int argc, char** argv) {
     Cfg::set_dtlim(pars.at("dtlim"));
     Cfg::set_charm_mix(x, y);
     Cfg::print_config();
+    constexpr bool perfect = false;
+    if (perfect) {
+        CPVMinimizer::setSetup(Cfg::ExpSetup::Perfect);
+        DDGev::setSetup(Cfg::ExpSetup::Perfect);
+    } else {
+        CPVMinimizer::setSetup(Cfg::ExpSetup::Belle);
+        DDGev::setSetup(Cfg::ExpSetup::Belle);
+    }
+
+//    CPVMinimizer::fixPar("beta");
+//    CPVMinimizer::fixPar("gamma");
+    CPVMinimizer::fixPar("rb");
+    CPVMinimizer::fixPar("delb");
 
     const auto bdecay = bmode::DKs;
-    const double delb = 0.;
-    constexpr uint64_t nevt = 100000;
-    Cfg::set_delb(delb);
-    cout << "New delb " << delb << endl;
-    WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
-    WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
-    WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
+    constexpr uint64_t nevt = 400000;
 
-//    for (double delb = 0.; delb < 360.; delb += 10) {
-//        Cfg::set_delb(delb);
-//        cout << "New delb " << delb << endl;
-//        WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
-//        WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
-//        WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
-//    }
+    if (argc == 2) { // scan
+        for (double delb = 0.; delb < 360.; delb += 10) {
+            Cfg::set_delb(delb);
+            cout << "New delb " << delb << endl;
+            WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
+            WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
+            WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
+        }
+    } else {
+        double delb = 0.;
+        if (argc == 3) // single fit
+            delb = std::stoi(argv[2]);
+
+        Cfg::set_delb(delb);
+        cout << "New delb " << delb << endl;
+        WFDriver::gen_dd_with_wf(bdecay, pars.at("rb"), nevt, 0, 100);
+        WFDriver::gen_cp_with_wf(bdecay, pars.at("rb"), 0.5 * nevt, 0.5 * nevt, 0, 100);
+        WFDriver::fit_with_wf(bdecay, fitmode::DKs, pars.at("rb"), 0, 100);
+    }
 
 //    constexpr uint16_t sb = 0;
 //    for (double delb = 0.; delb < 360.; delb += 10) {

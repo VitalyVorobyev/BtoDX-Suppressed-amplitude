@@ -359,11 +359,9 @@ DDBPars::ddpair DDBPars::coefs_dh() const {
     auto c = ud.second / ud.first;
     auto s = f / ud.first;
     if (std::fabs(s) > 1.) {
-        static bool flag = true;
-        if (flag) {
+        static int flag = 0;
+        if (flag++ < 16)
             cerr << "WARNING: |s| > 1" << endl;
-            flag = false;
-        }
         s = s > 0 ? 1. : -1.;
     }
     return make_pair(c, s);

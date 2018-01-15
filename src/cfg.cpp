@@ -4,7 +4,6 @@
 #include <fstream>
 #include <cmath>
 #include <vector>
-#include <map>
 
 #include "mylibs/libTatami/toypdf.h"
 
@@ -26,10 +25,15 @@ using std::cout;
 using std::unique_ptr;
 using std::to_string;
 
-constexpr double mean = 0.;
-constexpr double sigma = 0.;
-constexpr double fbkg = 0.;
-constexpr double wtag = 0.;
+const Cfg::ExpCfg Cfg::belleCfg(0., 1.25, 0.3, 0.3);
+const Cfg::ExpCfg Cfg::lhcbCfg(0., 0.06, 0.08, 0.05);
+const Cfg::ExpCfg Cfg::perfCfg(0., 0., 0., 0.);
+
+const std::map<Cfg::ExpSetup, Cfg::ExpCfg> Cfg::expCfgMap {
+    {Cfg::ExpSetup::Belle, Cfg::belleCfg},
+    {Cfg::ExpSetup::LHCb, Cfg::lhcbCfg},
+    {Cfg::ExpSetup::Perfect, Cfg::perfCfg},
+};
 
 int Cfg::ncp = 4 * std::pow(10, 4);
 int Cfg::nfl = 5 * std::pow(10, 5);
@@ -90,16 +94,18 @@ void Cfg::print_config() {
          << "delb " << delb << endl
          << "beta " << beta << endl
          << "gamma " << ckmgamma << endl
-         << "mean " << mean << endl
-         << "sigma " << sigma << endl
-         << "fbkg " << fbkg << endl
-         << "wtag " << wtag << endl
+//         << "mean " << mean << endl
+//         << "sigma " << sigma << endl
+//         << "fbkg " << fbkg << endl
+//         << "wtag " << wtag << endl
          << "x " << charm_x << endl
          << "y " << charm_y << endl;
 }
 
-libTatami::ToyPdf Cfg::pdf() {
-    return libTatami::ToyPdf(mean, sigma, fbkg, wtag, -dtlim, dtlim);
+unique_ptr<libTatami::ToyPdf> Cfg::pdf(Cfg::ExpSetup exp) {
+    const auto& expCfg = expCfgMap.at(exp);
+    return std::make_unique<libTatami::ToyPdf>(expCfg.mean(), expCfg.sigma(),
+                             expCfg.fbkg(), expCfg.wtag(), -dtlim, dtlim);
 }
 
 int Cfg::n_posi_cp() {return ncp / 2;}

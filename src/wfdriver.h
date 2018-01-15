@@ -1,5 +1,4 @@
-#ifndef WFDRIVER_H
-#define WFDRIVER_H
+# pragma once
 
 #include <cstdint>
 
@@ -7,7 +6,7 @@
 
 /** @brief High level instructions */
 class WFDriver {
-    WFDriver() {}
+    WFDriver() = default;
 
  public:
     /**
@@ -71,5 +70,3 @@ class WFDriver {
                             uint16_t idxmin=0, uint16_t idxmax=100,
                             uint16_t sb = 0);
 };
-
-#endif // WFDRIVER_H

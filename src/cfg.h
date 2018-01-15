@@ -3,6 +3,7 @@
 #include <string>
 #include <utility>  // pair
 #include <memory>
+#include <map>
 
 #include "fitmodes.h"
 
@@ -15,7 +16,33 @@ namespace libTatami {
 
 /** @brief The Cfg class keeps configuration */
 class Cfg {
+ public:
+   enum class ExpSetup : int {Belle = 0, LHCb = 1, Perfect = 2};
+
+ private:
     Cfg();
+
+    class ExpCfg {
+        double m_mean;
+        double m_sigma;
+        double m_wtag;
+        double m_fbkg;
+
+     public:
+        ExpCfg(double m, double s, double w, double f) :
+            m_mean(m), m_sigma(s), m_wtag(w), m_fbkg(f) {}
+
+        double mean() const {return m_mean;}
+        double sigma() const {return m_sigma;}
+        double wtag() const {return m_wtag;}
+        double fbkg() const {return m_fbkg;}
+    };
+
+    const static ExpCfg belleCfg;
+    const static ExpCfg lhcbCfg;
+    const static ExpCfg perfCfg;
+
+    const static std::map<ExpSetup, ExpCfg> expCfgMap;
 
     // Experimental conditions
     static int ncp;
@@ -45,7 +72,7 @@ class Cfg {
 
     static std::pair<int, int> nevts(dtypes type);
     static std::string dfile(dtypes type, uint32_t nevt=0);
-    static libTatami::ToyPdf pdf();
+    static std::unique_ptr<libTatami::ToyPdf> pdf(ExpSetup exp);
 
     static void set_beta(double x) {beta = x;}
     static void set_dtlim(double x) {dtlim = x;}
